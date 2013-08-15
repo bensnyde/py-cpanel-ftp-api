@@ -83,7 +83,7 @@ class Cpanel:
                 if include_account_types:
                         data.push({'include_account_types': include_account_types})
                 if skip_acct_types:
-                        data.pus({'skip-acct_types': skip_acct_types})
+                        data.push({'skip-acct_types': skip_acct_types})
                 return self.cQuery('listftpwithdisk', **data)
 
         def passwd(self, username, password):
