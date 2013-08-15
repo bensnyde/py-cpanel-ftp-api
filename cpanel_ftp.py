@@ -2,11 +2,12 @@
 =====================================================
  Cpanel API2 FTP Module Python Library
 =====================================================
-:Info: See <http://docs.cpanel.net/twiki/bin/view/ApiDocs/Api2/ApiFtp> for SolusVM XMLRPC API implementation.
-:Author: Benton Snyder <goodger@python.org>
+:Info: See http://docs.cpanel.net/twiki/bin/view/ApiDocs/Api2/ApiFtp for API implementation.
+:Author: Benton Snyder introspectr3@gmail.com
+:Website: http://www.noumenaldesigns.com
 :Date: $Date: 2013-08-15 23:02:21 -0600 (Thurs, 15 Aug 2013) $
 :Revision: $Revision: 0004 $
-:Description: Python library for interfacing FTP functions with Cpanel <http://www.cpanel.net>
+:Description: Python library for interfacing FTP functions with Cpanel http://www.cpanel.net
 """
 from httplib import HTTPSConnection
 from base64 import b64encode
