@@ -4,7 +4,7 @@
 =====================================================
 :Info: See http://docs.cpanel.net/twiki/bin/view/ApiDocs/Api2/ApiFtp for API implementation.
 :Author: Benton Snyder introspectr3@gmail.com
-:Website: http://www.noumenaldesigns.com
+:Website: Noumenal Designs <http://www.noumenaldesigns.com>
 :Date: $Date: 2013-08-15 23:02:21 -0600 (Thurs, 15 Aug 2013) $
 :Revision: $Revision: 0004 $
 :Description: Python library for interfacing FTP functions with Cpanel http://www.cpanel.net
