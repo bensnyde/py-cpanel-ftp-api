@@ -14,5 +14,5 @@ Usage
 ---
 ```
 cpanel = Cpanel("whm.example.com", "root", "strongpassword", "some_cpanel_user")
-print cpanel.listftp()
+print cpanel.listzones()
 ```
