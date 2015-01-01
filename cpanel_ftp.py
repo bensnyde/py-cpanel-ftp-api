@@ -1,36 +1,43 @@
 """
-=====================================================
- Cpanel API2 FTP Module Python Library
-=====================================================
-:Info: See http://docs.cpanel.net/twiki/bin/view/ApiDocs/Api2/ApiFtp for API implementation.
-:Author: Benton Snyder introspectr3@gmail.com
-:Website: Noumenal Designs <http://www.noumenaldesigns.com>
-:Description: Python library for interfacing FTP functions with Cpanel http://www.cpanel.net
+
+Python Library for WHM/Cpanel's API2 FTP Module
+
+	https://documentation.cpanel.net/display/SDK/cPanel+API+2+-+Ftp
+
+Author: Benton Snyder
+Website: http://bensnyde.me
+Created: 8/15/13
+Revised: 1/1/15
+
 """
 import logging
-import base64 
+import base64
 import httplib
 import json
 import socket
 
-WHMURL = "whm.example.com"
-WHMROOT = "root"
-WHMPASS = "mystrongpassword"
+# Log handler
 apilogger = "api_logger"
 
 class Cpanel:
-    def __init__(self, username):
+    def __init__(self, whm_base_url, whm_username, whm_password, cpanel_username):
         """Constructor
 
             Cpanel FTP library public constructor.
 
         Parameters
-            username: str cpanel account to run scripts as
+            whm_base_url: str whm base url (ex. whm.example.com)
+            whm_username: str whm root username
+            whm_password: str whm password
+            cpanel_username: str cpanel account to run scripts as
         """
-        self.user = username
+        self.whm_base_url = whm_base_url
+        self.whm_username = whm_username
+        self.whm_password = whm_password
+        self.cpanel_account = cpanel_username
 
-    def cQuery(self, script, **kwargs):
-        """Query Cpanel 
+    def _whm_api_query(self, script, **kwargs):
+        """Query Cpanel
 
             Queries specified WHM server's JSON API with specified query string.
 
@@ -40,21 +47,21 @@ class Cpanel:
         Returns
             JSON decoded response from server
         """
-        # Build Query String
-        queryStr = '/json-api/cpanel?cpanel_xmlapi_version=2&cpanel_jsonapi_module=Ftp&cpanel_jsonapi_user=%s&cpanel_jsonapi_func=%s' % (self.username, script)
+        # Build url string
+        queryStr = '/json-api/cpanel?cpanel_xmlapi_version=2&cpanel_jsonapi_module=Ftp&cpanel_jsonapi_user=%s&cpanel_jsonapi_func=%s' % (self.cpanel_account, script)
         for key,val in kwargs.iteritems():
             queryStr = "%s&%s=%s" % (queryStr, key, val)
 
-        # Make API call
-        try:       
-            conn = httplib.HTTPSConnection(WHMURL, 2087)
-            conn.request('GET', queryStr, headers={'Authorization':'Basic ' + base64.b64encode(WHMROOT+':'+WHMPASS).decode('ascii')})
+        # API call
+        try:
+            conn = httplib.HTTPSConnection(self.whm_base_url, 2087)
+            conn.request('GET', queryStr, headers={'Authorization':'Basic ' + base64.b64encode(self.whm_username+':'+self.whm_password).decode('ascii')})
             response = conn.getresponse()
             data = json.loads(response.read())
             conn.close()
 
             return data
-        # Log any errors
+        # Log errors
         except httplib.HTTPException as ex:
             logging.getLogger(apilogger).critical("HTTPException from CpanelFTP API: %s" % ex)
         except socket.error as ex:
@@ -69,19 +76,23 @@ class Cpanel:
         """Get FTP Accounts
 
             Lists FTP accounts associated with the authenticated user's account.
-            http://docs.cpanel.net/twiki/bin/view/ApiDocs/Api2/ApiFtp#Ftp::listftp
-        
+
+                https://documentation.cpanel.net/display/SDK/cPanel+API+2+-+Ftp#cPanelAPI2-Ftp-Ftp::listftp
+
         Parameters
             include_account_types: str ftp account types you wish to view
             skip_account_types: str exclude ftp account types from the list
         Returns
             JSON
                 success: int success of api call
-                message: str summary of api call 
+                message: str summary of api call
                 *data:
-                    accounts: cpanel array 
+                    accounts:
+                        user: str account username
+                        type: str account type
+                        homedir: str account's home directory
         """
-        result = self.cQuery('listftp', **{
+        result = self._whm_api_query('listftp', **{
                 'include_account_types': include_account_types,
                 'skip_account_types': skip_account_types,
             }
@@ -111,18 +122,26 @@ class Cpanel:
         """Get FTP Sessions
 
             Retrieves a list of active FTP sessions associated with the authenticated account.
-            http://docs.cpanel.net/twiki/bin/view/ApiDocs/Api2/ApiFtp#Ftp::listftpsessions
+
+                https://documentation.cpanel.net/display/SDK/cPanel+API+2+-+Ftp#cPanelAPI2-Ftp-Ftp::listftpsessions
 
         Parameters
             None
         Returns
             JSON
                 success: int success of api call
-                message: str summary of api call  
+                message: str summary of api call
                 *data:
-                    sessions: cpanel array                 
+                    sessions:
+                        pid: str process id of ftp session
+                        status: str status of transfer
+                        user: str username associated with session
+                        file: str filename in transfer
+                        cmdline: str ps of ftp process
+                        login: str login time
+                        host: str hostname connected to session
         """
-        result = self.cQuery('listftpsessions')
+        result = self._whm_api_query('listftpsessions')
 
         try:
             if result["cpanelresult"]["event"]["result"] == 1:
@@ -137,18 +156,19 @@ class Cpanel:
         except IndexError as ex:
             logging.getLogger(apilogger).critical("Unexpected response from remote server: %s" % ex)
         except TypeError as ex:
-            pass            
+            pass
 
         return {
             'success': 0,
             'message': 'There was a problem retrieving the FTP sessions listing.'
-        }        
+        }
 
     def listftpwithdisk(self, dirhtml="", include_account_types=None, skip_acct_types=None):
         """Get FTP Accounts
 
             Generates a list of FTP accounts, including disk information, associated with a cPanel account.
-            http://docs.cpanel.net/twiki/bin/view/ApiDocs/Api2/ApiFtp#Ftp::listftpwithdisk 
+
+                https://documentation.cpanel.net/display/SDK/cPanel+API+2+-+Ftp#cPanelAPI2-Ftp-Ftp::listftpwithdisk
 
         Parameters
             dirhtml: str allows you to prepend the 'dir' return variable with a URL
@@ -157,9 +177,23 @@ class Cpanel:
         Returns
             JSON
                 success: int success of api call
-                message: str summary of api call 
+                message: str summary of api call
                 *data:
-                    accounts: cpanel array                      
+                    accounts:
+                        diskquota: str disk quota in Mb
+                        diskusedpercent: int percentage of quota used
+                        diskused: int space used in Mb
+                        humandiskquota: str disk quota in Mb
+                        reldir: str relative path
+                        accttype: str account type
+                        _diskused: int disk used in bytes
+                        login: str username
+                        dir: str absoulte path
+                        deletable: bool is account deletable
+                        serverlogin: str username@domain
+                        humandiskused: int disk used in Mb
+                        diskusedpercent20: int percentage of quota used
+                        _diskquota: int disk quota in bytes
         """
         data = {'dirhtml': dirhtml}
 
@@ -168,7 +202,7 @@ class Cpanel:
         if skip_acct_types:
             data.push({'skip-acct_types': skip_acct_types})
 
-        result = self.cQuery('listftpwithdisk', **data)
+        result = self._whm_api_query('listftpwithdisk', **data)
 
         try:
             if result["cpanelresult"]["event"]["result"] == 1:
@@ -183,28 +217,29 @@ class Cpanel:
         except IndexError as ex:
             logging.getLogger(apilogger).critical("Unexpected response from remote server: %s" % ex)
         except TypeError as ex:
-            pass            
+            pass
 
         return {
             'success': 0,
             'message': 'There was a problem retrieving the FTP accounts listing.'
-        } 
+        }
 
     def passwd(self, username, password):
         """Change FTP Account password
 
             Updates FTP account's password.
-            http://docs.cpanel.net/twiki/bin/view/ApiDocs/Api2/ApiFtp#Ftp::passwd
-        
+
+                https://documentation.cpanel.net/display/SDK/cPanel+API+2+-+Ftp#cPanelAPI2-Ftp-Ftp::passwd
+
         Parameters
             username: str ftp account name
             password: str new password for the FTP account
         Returns
             JSON
                 success: int success of api call
-                message: str summary of api call          
+                message: str summary of api call
         """
-        result = self.cQuery('passwd', **{
+        result = self._whm_api_query('passwd', **{
             'user': username,
             'pass': password
         })
@@ -219,19 +254,20 @@ class Cpanel:
         except IndexError as ex:
             logging.getLogger(apilogger).critical("Unexpected response from remote server: %s" % ex)
         except TypeError as ex:
-            pass            
+            pass
 
         return {
             'success': 0,
             'message': 'There was a problem changing the FTP account password.'
-        }                
+        }
 
     def addftp(self, user, password, quota, homedir):
         """Create FTP Account
 
             Adds a new FTP account.
-            http://docs.cpanel.net/twiki/bin/view/ApiDocs/Api2/ApiFtp#Ftp::addftp
-        
+
+                https://documentation.cpanel.net/display/SDK/cPanel+API+2+-+Ftp#cPanelAPI2-Ftp-Ftp::addftp
+
         Parameters
             user: str ftp account name
             password: str password
@@ -240,9 +276,9 @@ class Cpanel:
         Returns
             JSON
                 success: int success of api call
-                message: str summary of api call              
+                message: str summary of api call
         """
-        result = self.cQuery('addftp', **{
+        result = self._whm_api_query('addftp', **{
             'user': user,
             'pass': password,
             'quota': quota,
@@ -259,28 +295,29 @@ class Cpanel:
         except IndexError as ex:
             logging.getLogger(apilogger).critical("Unexpected response from remote server: %s" % ex)
         except TypeError as ex:
-            pass            
+            pass
 
         return {
             'success': 0,
             'message': 'There was a problem creating the FTP account.'
-        }           
+        }
 
     def setquota(self, user, quota):
         """Set FTP Account quota
 
             Updates FTP account quota.
-            http://docs.cpanel.net/twiki/bin/view/ApiDocs/Api2/ApiFtp#Ftp::setquota
-        
+
+                https://documentation.cpanel.net/display/SDK/cPanel+API+2+-+Ftp#cPanelAPI2-Ftp-Ftp::setquota
+
         Parameters
             user: str ftp account name
             quota: int new quota in mb (0 for unlimmited)
         Returns
             JSON
                 success: int success of api call
-                message: str summary of api call                     
+                message: str summary of api call
         """
-        result = self.cQuery('setquota', **{
+        result = self._whm_api_query('setquota', **{
             'user': user,
             'quota': quota
         })
@@ -295,28 +332,29 @@ class Cpanel:
         except IndexError:
             logging.getLogger(apilogger).critical("Unexpected response from remote server: %s" % ex)
         except TypeError as ex:
-            pass            
+            pass
 
         return {
             'success': 0,
             'message': 'There was a problem updating the FTP account quota.'
-        }           
+        }
 
     def delftp(self, user, destroy=False):
         """Delete FTP Account
 
             Deletes an FTP account.
-            http://docs.cpanel.net/twiki/bin/view/ApiDocs/Api2/ApiFtp#Ftp::delftp
-        
+
+                https://documentation.cpanel.net/display/SDK/cPanel+API+2+-+Ftp#cPanelAPI2-Ftp-Ftp::delftp
+
         Parameters
             user: str ftp account name
             destroy: bool whether or not to destroy user's data
         Returns
             JSON
                 success: int success of api call
-                message: str summary of api call     
+                message: str summary of api call
         """
-        result = self.cQuery('delftp', **{
+        result = self._whm_api_query('delftp', **{
             'user': user,
             'destroy': destroy
         })
@@ -331,9 +369,9 @@ class Cpanel:
         except IndexError as ex:
             logging.getLogger(apilogger).critical("Unexpected response from remote server: %s" % ex)
         except TypeError as ex:
-            pass            
+            pass
 
         return {
             'success': 0,
             'message': 'There was a problem deleting the FTP account.'
-        }   
+        }
