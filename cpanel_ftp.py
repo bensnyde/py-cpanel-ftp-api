@@ -7,7 +7,7 @@ Python Library for WHM/Cpanel's API2 FTP Module
 Author: Benton Snyder
 Website: http://bensnyde.me
 Created: 8/15/13
-Revised: 1/1/15
+Revised: 1/2/15
 
 """
 import logging
@@ -16,10 +16,7 @@ import httplib
 import json
 import socket
 
-# Log handler
-apilogger = "api_logger"
-
-class Cpanel:
+class CpanelFTP:
     def __init__(self, whm_base_url, whm_username, whm_password, cpanel_username):
         """Constructor
 
@@ -63,13 +60,13 @@ class Cpanel:
             return data
         # Log errors
         except httplib.HTTPException as ex:
-            logging.getLogger(apilogger).critical("HTTPException from CpanelFTP API: %s" % ex)
+            logging.critical("HTTPException from CpanelFTP API: %s" % ex)
         except socket.error as ex:
-            logging.getLogger(apilogger).critical("Socket.error connecting to CpanelFTP API: %s" % ex)
+            logging.critical("Socket.error connecting to CpanelFTP API: %s" % ex)
         except ValueError as ex:
-            logging.getLogger(apilogger).critical("ValueError decoding CpanelFTP API response string: %s" % ex)
+            logging.critical("ValueError decoding CpanelFTP API response string: %s" % ex)
         except Exception as ex:
-            logging.getLogger(apilogger).critical("Unhandled Exception while querying CpanelFTP API: %s" % ex)
+            logging.critical("Unhandled Exception while querying CpanelFTP API: %s" % ex)
 
 
     def listftp(self, include_account_types="", skip_account_types=""):
@@ -107,9 +104,9 @@ class Cpanel:
                         'accounts': result["cpanelresult"]["data"]
                     }
                 }
-            logging.getLogger(apilogger).error("Remote server returned error: %s" % result["cpanelresult"]["error"])
+            logging.error("Remote server returned error: %s" % result["cpanelresult"]["error"])
         except IndexError as ex:
-            logging.getLogger(apilogger).critical("Unexpected response from remote server: %s" % ex)
+            logging.critical("Unexpected response from remote server: %s" % ex)
         except TypeError as ex:
             pass
 
@@ -152,9 +149,9 @@ class Cpanel:
                         'sessions': result["cpanelresult"]["data"]
                     }
                 }
-            logging.getLogger(apilogger).error("Remote server returned error: %s" % result["cpanelresult"]["error"])
+            logging.error("Remote server returned error: %s" % result["cpanelresult"]["error"])
         except IndexError as ex:
-            logging.getLogger(apilogger).critical("Unexpected response from remote server: %s" % ex)
+            logging.critical("Unexpected response from remote server: %s" % ex)
         except TypeError as ex:
             pass
 
@@ -213,9 +210,9 @@ class Cpanel:
                         'accounts': result["cpanelresult"]["data"]
                     }
                 }
-            logging.getLogger(apilogger).error("Remote server returned error: %s" % result["cpanelresult"]["error"])
+            logging.error("Remote server returned error: %s" % result["cpanelresult"]["error"])
         except IndexError as ex:
-            logging.getLogger(apilogger).critical("Unexpected response from remote server: %s" % ex)
+            logging.critical("Unexpected response from remote server: %s" % ex)
         except TypeError as ex:
             pass
 
@@ -250,9 +247,9 @@ class Cpanel:
                     'success': 1,
                     'message': 'FTP account password successfully changed.'
                 }
-            logging.getLogger(apilogger).error("Remote server returned error: %s" % result["cpanelresult"]["error"])
+            logging.error("Remote server returned error: %s" % result["cpanelresult"]["error"])
         except IndexError as ex:
-            logging.getLogger(apilogger).critical("Unexpected response from remote server: %s" % ex)
+            logging.critical("Unexpected response from remote server: %s" % ex)
         except TypeError as ex:
             pass
 
@@ -291,9 +288,9 @@ class Cpanel:
                     'success': 1,
                     'message': 'FTP account successfully created.'
                 }
-            logging.getLogger(apilogger).error("Remote server returned error: %s" % result["cpanelresult"]["error"])
+            logging.error("Remote server returned error: %s" % result["cpanelresult"]["error"])
         except IndexError as ex:
-            logging.getLogger(apilogger).critical("Unexpected response from remote server: %s" % ex)
+            logging.critical("Unexpected response from remote server: %s" % ex)
         except TypeError as ex:
             pass
 
@@ -328,9 +325,9 @@ class Cpanel:
                     'success': 1,
                     'message': 'FTP account quota successfully updated.'
                 }
-            logging.getLogger(apilogger).error("Remote server returned error: %s" % result["cpanelresult"]["error"])
+            logging.error("Remote server returned error: %s" % result["cpanelresult"]["error"])
         except IndexError:
-            logging.getLogger(apilogger).critical("Unexpected response from remote server: %s" % ex)
+            logging.critical("Unexpected response from remote server: %s" % ex)
         except TypeError as ex:
             pass
 
@@ -365,9 +362,9 @@ class Cpanel:
                     'success': 1,
                     'message': 'FTP account deleted successfully.'
                 }
-            logging.getLogger(apilogger).error("Remote server returned error: %s" % result["cpanelresult"]["error"])
+            logging.error("Remote server returned error: %s" % result["cpanelresult"]["error"])
         except IndexError as ex:
-            logging.getLogger(apilogger).critical("Unexpected response from remote server: %s" % ex)
+            logging.critical("Unexpected response from remote server: %s" % ex)
         except TypeError as ex:
             pass
 
